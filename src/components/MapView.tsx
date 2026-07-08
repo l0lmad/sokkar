@@ -146,10 +146,14 @@ export default function MapView({ userName, userPhone, isAdmin }: MapViewProps) 
       const L = (await import("leaflet")).default;
 
       if (!mapInstanceRef.current && mapRef.current) {
-        mapInstanceRef.current = L.map(mapRef.current).setView(
-          [30.0444, 31.2357],
-          10
-        );
+        const egyptBounds: L.LatLngBoundsExpression = [[22.0, 24.0], [32.0, 37.0]];
+        mapInstanceRef.current = L.map(mapRef.current, {
+          center: [30.0444, 31.2357],
+          zoom: 10,
+          maxBounds: egyptBounds,
+          maxBoundsViscosity: 1.0,
+          minZoom: 7,
+        });
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "&copy; OpenStreetMap contributors",

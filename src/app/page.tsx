@@ -26,6 +26,10 @@ import {
   Shield,
   UserPlus,
   ExternalLink,
+  Users,
+  Search,
+  Trash2,
+  Mail,
 } from "lucide-react";
 
 const MapView = dynamic(() => import("@/components/MapView"), {
@@ -591,6 +595,180 @@ function InquiriesPage() {
   );
 }
 
+function ClientsPage() {
+  const [clients, setClients] = useState<Array<{
+    id: number;
+    name: string;
+    email: string | null;
+    phone: string;
+    whatsapp: string | null;
+    contactTime: string | null;
+    clientType: string;
+    notes: string | null;
+    city: string | null;
+    budget: string | null;
+    createdAt: string | null;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+
+  const fetchClients = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (typeFilter) params.append("clientType", typeFilter);
+      if (search) params.append("search", search);
+      const res = await fetch(`/api/clients?${params.toString()}`);
+      const data = await res.json();
+      setClients(data);
+    } catch {}
+    setLoading(false);
+  }, [typeFilter, search]);
+
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("هل أنت متأكد من حذف هذا العميل?")) return;
+    try {
+      await fetch(`/api/clients/${id}`, { method: "DELETE" });
+      fetchClients();
+    } catch {}
+  };
+
+  const contactTimeLabel = (t: string | null) => {
+    if (!t) return "";
+    return {
+      morning: "الفترة الصباحية",
+      afternoon: "الفترة الظهرية",
+      evening: "الفترة المسائية",
+      night: "الفترة الليلية",
+    }[t] || t;
+  };
+
+  const typeLabel = (t: string) => {
+    return {
+      buyer: "مشتري",
+      seller: "بائع",
+      tenant: "مستأجر",
+    }[t] || t;
+  };
+
+  return (
+    <div>
+      <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3 mb-6">
+        <Users className="text-orange-500" />
+        العملاء
+      </h2>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px] relative">
+            <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="ابحث عن عميل..."
+              className="w-full pr-10 pl-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="">كل الأنواع</option>
+            <option value="buyer">مشتري</option>
+            <option value="seller">بائع</option>
+            <option value="tenant">مستأجر</option>
+          </select>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
+        </div>
+      ) : clients.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+          <Users size={48} className="mx-auto text-gray-300 mb-3" />
+          <p className="text-gray-500">لا يوجد عملاء بعد</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {clients.map((client) => (
+            <div key={client.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-bold text-gray-800">{client.name}</p>
+                  <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                    <Phone size={14} />
+                    <span dir="ltr">{client.phone}</span>
+                  </p>
+                  {client.whatsapp && (
+                    <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
+                      <MessageCircle size={14} />
+                      <span dir="ltr">{client.whatsapp}</span>
+                    </p>
+                  )}
+                  {client.email && (
+                    <p className="text-sm text-blue-600 flex items-center gap-1 mt-1">
+                      <Mail size={14} />
+                      <span>{client.email}</span>
+                    </p>
+                  )}
+                  {client.city && (
+                    <p className="text-xs text-gray-400 mt-1">📍 {client.city}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
+                    {typeLabel(client.clientType)}
+                  </span>
+                  <button
+                    onClick={() => handleDelete(client.id)}
+                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+              {client.contactTime && (
+                <p className="text-xs text-gray-400 flex items-center gap-1 mt-2">
+                  <Clock size={12} />
+                  {contactTimeLabel(client.contactTime)}
+                </p>
+              )}
+              {client.notes && (
+                <p className="mt-2 text-sm text-gray-600 bg-gray-50 rounded-xl p-3">{client.notes}</p>
+              )}
+              {client.budget && (
+                <p className="mt-2 text-sm text-orange-600 font-bold">
+                  الميزانية: {parseFloat(client.budget).toLocaleString("ar-EG")} جنيه
+                </p>
+              )}
+              {client.createdAt && (
+                <p className="mt-2 text-xs text-gray-400">
+                  {new Date(client.createdAt).toLocaleDateString("ar-EG", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -665,6 +843,8 @@ export default function HomePage() {
         return <SettingsPage user={user} onUserUpdate={handleUserUpdate} />;
       case "inquiries":
         return user.isAdmin ? <InquiriesPage /> : null;
+      case "clients":
+        return user.isAdmin ? <ClientsPage /> : null;
       default:
         return (
           <Dashboard

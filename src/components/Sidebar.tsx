@@ -12,6 +12,7 @@ import {
   Settings,
   MessageSquare,
   Clock,
+  Users,
 } from "lucide-react";
 
 interface User {
@@ -33,8 +34,20 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout }: Side
   const [mobileOpen, setMobileOpen] = useState(false);
   const [newInquiriesCount, setNewInquiriesCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
-  const [lastSeenInquiries, setLastSeenInquiries] = useState(0);
-  const [lastSeenPending, setLastSeenPending] = useState(0);
+  const [lastSeenInquiries, setLastSeenInquiries] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sokkar_lastSeenInquiries");
+      return saved ? parseInt(saved, 10) : 0;
+    }
+    return 0;
+  });
+  const [lastSeenPending, setLastSeenPending] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sokkar_lastSeenPending");
+      return saved ? parseInt(saved, 10) : 0;
+    }
+    return 0;
+  });
 
   useEffect(() => {
     if (!user.isAdmin) return;
@@ -58,8 +71,14 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout }: Side
   }, [user.isAdmin]);
 
   const handleTabClick = (tabId: string) => {
-    if (tabId === "inquiries") setLastSeenInquiries(newInquiriesCount);
-    if (tabId === "pending-approvals") setLastSeenPending(pendingCount);
+    if (tabId === "inquiries") {
+      setLastSeenInquiries(newInquiriesCount);
+      localStorage.setItem("sokkar_lastSeenInquiries", String(newInquiriesCount));
+    }
+    if (tabId === "pending-approvals") {
+      setLastSeenPending(pendingCount);
+      localStorage.setItem("sokkar_lastSeenPending", String(pendingCount));
+    }
     onTabChange(tabId);
     setMobileOpen(false);
   };
@@ -75,6 +94,7 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout }: Side
         { id: "add-property", label: "إضافة عقار", icon: PlusCircle },
         { id: "pending-approvals", label: "طلبات الإضافة", icon: Clock, badge: unseenPending },
         { id: "inquiries", label: "الاستفسارات", icon: MessageSquare, badge: unseenInquiries },
+        { id: "clients", label: "العملاء", icon: Users },
         { id: "settings", label: "الإعدادات", icon: Settings },
       ]
     : [
