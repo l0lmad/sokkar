@@ -148,6 +148,7 @@ export default function PropertiesList({
         <PropertyDetail
           property={selectedProperty}
           onClose={() => setSelectedProperty(null)}
+          onDelete={() => { setSelectedProperty(null); fetchProperties(); }}
           userName={userName}
           userPhone={userPhone}
           isAdmin={isAdmin}

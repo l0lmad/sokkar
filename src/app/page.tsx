@@ -693,6 +693,7 @@ export default function HomePage() {
         <PropertyDetail
           property={selectedProperty}
           onClose={() => setSelectedProperty(null)}
+          onDelete={() => setSelectedProperty(null)}
           userName={user.name}
           userPhone={user.phone}
           isAdmin={user.isAdmin}

@@ -102,11 +102,20 @@ export default function MapView({ userName, userPhone, isAdmin }: MapViewProps) 
     
     setSearching(true);
     try {
+      // Try with Egypt bias first, then fallback without
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=eg&limit=5`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&accept-language=ar`
       );
       const data = await res.json();
-      setSearchResults(data);
+      // Prioritize Egyptian results
+      const egResults = data.filter((r: any) => 
+        r.display_name?.includes("Egypt") || 
+        r.display_name?.includes("مصر") ||
+        r.type === "yes" ||
+        r.type === "administrative"
+      );
+      const sorted = egResults.length > 0 ? egResults : data;
+      setSearchResults(sorted.slice(0, 8));
     } catch (err) {
       console.error(err);
     }
@@ -390,6 +399,7 @@ export default function MapView({ userName, userPhone, isAdmin }: MapViewProps) 
         <PropertyDetail
           property={selectedProperty}
           onClose={() => setSelectedProperty(null)}
+          onDelete={() => { setSelectedProperty(null); fetchProperties(); }}
           userName={userName}
           userPhone={userPhone}
           isAdmin={isAdmin}

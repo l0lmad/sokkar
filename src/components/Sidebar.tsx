@@ -33,6 +33,8 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout }: Side
   const [mobileOpen, setMobileOpen] = useState(false);
   const [newInquiriesCount, setNewInquiriesCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
+  const [lastSeenInquiries, setLastSeenInquiries] = useState(0);
+  const [lastSeenPending, setLastSeenPending] = useState(0);
 
   useEffect(() => {
     if (!user.isAdmin) return;
@@ -40,12 +42,14 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout }: Side
       try {
         const res = await fetch("/api/inquiries?status=new");
         const data = await res.json();
-        setNewInquiriesCount(Array.isArray(data) ? data.length : 0);
+        const count = Array.isArray(data) ? data.length : 0;
+        setNewInquiriesCount(count);
       } catch {}
       try {
         const res = await fetch("/api/properties?pending=true&all=true");
         const data = await res.json();
-        setPendingCount(Array.isArray(data) ? data.length : 0);
+        const count = Array.isArray(data) ? data.length : 0;
+        setPendingCount(count);
       } catch {}
     };
     fetchCount();
@@ -53,14 +57,24 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout }: Side
     return () => clearInterval(interval);
   }, [user.isAdmin]);
 
+  const handleTabClick = (tabId: string) => {
+    if (tabId === "inquiries") setLastSeenInquiries(newInquiriesCount);
+    if (tabId === "pending-approvals") setLastSeenPending(pendingCount);
+    onTabChange(tabId);
+    setMobileOpen(false);
+  };
+
+  const unseenInquiries = Math.max(0, newInquiriesCount - lastSeenInquiries);
+  const unseenPending = Math.max(0, pendingCount - lastSeenPending);
+
   const menuItems = user.isAdmin
     ? [
         { id: "dashboard", label: "لوحة التحكم", icon: Home },
         { id: "properties", label: "العقارات", icon: Building2 },
         { id: "map", label: "خريطة العقارات", icon: MapPin },
         { id: "add-property", label: "إضافة عقار", icon: PlusCircle },
-        { id: "pending-approvals", label: "طلبات الإضافة", icon: Clock, badge: pendingCount },
-        { id: "inquiries", label: "الاستفسارات", icon: MessageSquare, badge: newInquiriesCount },
+        { id: "pending-approvals", label: "طلبات الإضافة", icon: Clock, badge: unseenPending },
+        { id: "inquiries", label: "الاستفسارات", icon: MessageSquare, badge: unseenInquiries },
         { id: "settings", label: "الإعدادات", icon: Settings },
       ]
     : [
@@ -129,10 +143,7 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout }: Side
             return (
               <button
                 key={item.id}
-                onClick={() => {
-                  onTabChange(item.id);
-                  setMobileOpen(false);
-                }}
+                onClick={() => handleTabClick(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                   isActive
                     ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg"

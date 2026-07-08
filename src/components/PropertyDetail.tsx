@@ -20,13 +20,17 @@ import {
   Copy,
   Check,
   Share2,
+  Edit3,
+  Trash2,
 } from "lucide-react";
 import type { Property } from "@/db/schema";
 import { useState } from "react";
+import EditPropertyModal from "./EditPropertyModal";
 
 interface PropertyDetailProps {
   property: Property;
   onClose: () => void;
+  onDelete?: (property: Property) => void;
   userPhone?: string;
   userName?: string;
   isAdmin?: boolean;
@@ -71,6 +75,7 @@ function formatPrice(price: string | number, listingType: string): string {
 export default function PropertyDetail({
   property,
   onClose,
+  onDelete,
   userPhone,
   userName,
   isAdmin,
@@ -87,6 +92,7 @@ export default function PropertyDetail({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const images = property.images ? JSON.parse(property.images) : [];
 
@@ -192,6 +198,31 @@ export default function PropertyDetail({
           )}
 
           <div className="absolute top-4 left-4 flex gap-2">
+            {isAdmin && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+                  className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-blue-100 transition-colors text-blue-600"
+                  title="تعديل العقار"
+                >
+                  <Edit3 size={18} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm(`هل أنت متأكد من حذف "${property.title}"؟`)) {
+                      fetch(`/api/properties/${property.id}`, { method: "DELETE" })
+                        .then(() => { onDelete?.(property); onClose(); })
+                        .catch(console.error);
+                    }
+                  }}
+                  className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-red-100 transition-colors text-red-600"
+                  title="حذف العقار"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </>
+            )}
             <button
               onClick={onClose}
               className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
@@ -478,6 +509,14 @@ export default function PropertyDetail({
           </div>
         </div>
       </div>
+
+      {editing && (
+        <EditPropertyModal
+          property={property}
+          onClose={() => setEditing(false)}
+          onSave={() => { setEditing(false); onClose(); }}
+        />
+      )}
     </div>
   );
 }
