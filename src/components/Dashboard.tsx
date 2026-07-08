@@ -7,6 +7,7 @@ import {
   Key,
   TrendingUp,
   ArrowLeft,
+  PlusCircle,
 } from "lucide-react";
 import type { Property } from "@/db/schema";
 
@@ -130,6 +131,13 @@ export default function Dashboard({ isAdmin, onNavigate, onViewProperty }: Dashb
               >
                 عرض الخريطة
               </button>
+              <a
+                href="/request-property"
+                className="px-6 py-3 bg-white/20 backdrop-blur-sm text-white font-bold rounded-xl hover:bg-white/30 transition-colors flex items-center gap-2"
+              >
+                <PlusCircle size={18} />
+                طلب إضافة عقار
+              </a>
             </div>
           </div>
         </div>

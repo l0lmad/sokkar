@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { properties } from "@/db/schema";
-import { eq, gte, lte, and, ilike, sql, type SQL } from "drizzle-orm";
+import { eq, gte, lte, and, sql, type SQL } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
     const bedrooms = searchParams.get("bedrooms");
     const search = searchParams.get("search");
     const featured = searchParams.get("featured");
+    const pending = searchParams.get("pending");
+    const all = searchParams.get("all");
 
     const conditions: SQL[] = [];
 
@@ -38,6 +40,8 @@ export async function GET(request: NextRequest) {
     if (maxArea) conditions.push(lte(properties.area, parseInt(maxArea)));
     if (bedrooms) conditions.push(eq(properties.bedrooms, parseInt(bedrooms)));
     if (featured === "true") conditions.push(eq(properties.featured, true));
+    if (pending === "true") conditions.push(eq(properties.isApproved, false));
+    if (all !== "true") conditions.push(eq(properties.isApproved, true));
     if (search) {
       conditions.push(
         sql`(${properties.title} ILIKE ${'%' + search + '%'} OR ${properties.description} ILIKE ${'%' + search + '%'} OR ${properties.city} ILIKE ${'%' + search + '%'} OR ${properties.district} ILIKE ${'%' + search + '%'})`

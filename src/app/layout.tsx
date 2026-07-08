@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           crossOrigin=""
         />
       </head>
-      <body className="bg-gray-50 text-gray-900 antialiased font-cairo">
+      <body className="bg-gray-50 text-gray-900 antialiased">
         {children}
       </body>
     </html>

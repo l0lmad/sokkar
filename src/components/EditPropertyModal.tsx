@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { X, Save, Plus, Image, Video, MapPin, ExternalLink, User } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, Save, Plus, Image, Video, MapPin, ExternalLink, User, Upload } from "lucide-react";
 import type { Property } from "@/db/schema";
 
 interface EditPropertyModalProps {
@@ -59,8 +59,10 @@ export default function EditPropertyModal({
 
   const [images, setImages] = useState<string[]>(existingImages);
   const [newImageUrl, setNewImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -440,10 +442,45 @@ export default function EditPropertyModal({
                 </div>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="px-4 py-2.5 bg-orange-100 text-orange-600 rounded-xl hover:bg-orange-200 transition-colors flex items-center gap-2"
+                >
+                  {uploading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-orange-500 border-t-transparent"></div>
+                  ) : (
+                    <Upload size={20} />
+                  )}
+                  رفع من الجهاز
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files || []);
+                    setUploading(true);
+                    for (const file of files) {
+                      const fd = new FormData();
+                      fd.append("file", file);
+                      try {
+                        const res = await fetch("/api/upload", { method: "POST", body: fd });
+                        const data = await res.json();
+                        if (data.url) setImages((prev) => [...prev, data.url]);
+                      } catch (err) { console.error(err); }
+                    }
+                    setUploading(false);
+                    if (e.target) e.target.value = "";
+                  }}
+                />
                 <input
                   type="url"
-                  placeholder="رابط الصورة (URL)"
+                  placeholder="أو رابط صورة من الإنترنت"
                   value={newImageUrl}
                   onChange={(e) => setNewImageUrl(e.target.value)}
                   className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -462,16 +499,40 @@ export default function EditPropertyModal({
             <div className="md:col-span-2">
               <label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-2">
                 <Video size={16} />
-                رابط الفيديو
+                فيديو العقار
               </label>
-              <input
-                type="url"
-                name="videoUrl"
-                value={formData.videoUrl}
-                onChange={handleChange}
-                placeholder="رابط فيديو YouTube أو رابط مباشر"
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  name="videoUrl"
+                  value={formData.videoUrl}
+                  onChange={handleChange}
+                  placeholder="رابط فيديو YouTube أو رابط مباشر"
+                  className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <label className="px-4 py-2.5 bg-orange-100 text-orange-600 rounded-xl hover:bg-orange-200 transition-colors cursor-pointer flex items-center gap-2">
+                  <Upload size={20} />
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploading(true);
+                      const fd = new FormData();
+                      fd.append("file", file);
+                      try {
+                        const res = await fetch("/api/upload", { method: "POST", body: fd });
+                        const data = await res.json();
+                        if (data.url) setFormData((prev) => ({ ...prev, videoUrl: data.url }));
+                      } catch (err) { console.error(err); }
+                      setUploading(false);
+                      if (e.target) e.target.value = "";
+                    }}
+                  />
+                </label>
+              </div>
             </div>
 
             {/* Featured */}

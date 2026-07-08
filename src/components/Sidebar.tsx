@@ -11,6 +11,7 @@ import {
   LogOut,
   Settings,
   MessageSquare,
+  Clock,
 } from "lucide-react";
 
 interface User {
@@ -31,6 +32,7 @@ interface SidebarProps {
 export default function Sidebar({ activeTab, onTabChange, user, onLogout }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [newInquiriesCount, setNewInquiriesCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     if (!user.isAdmin) return;
@@ -40,9 +42,14 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout }: Side
         const data = await res.json();
         setNewInquiriesCount(Array.isArray(data) ? data.length : 0);
       } catch {}
+      try {
+        const res = await fetch("/api/properties?pending=true&all=true");
+        const data = await res.json();
+        setPendingCount(Array.isArray(data) ? data.length : 0);
+      } catch {}
     };
     fetchCount();
-    const interval = setInterval(fetchCount, 15000);
+    const interval = setInterval(fetchCount, 10000);
     return () => clearInterval(interval);
   }, [user.isAdmin]);
 
@@ -52,6 +59,7 @@ export default function Sidebar({ activeTab, onTabChange, user, onLogout }: Side
         { id: "properties", label: "العقارات", icon: Building2 },
         { id: "map", label: "خريطة العقارات", icon: MapPin },
         { id: "add-property", label: "إضافة عقار", icon: PlusCircle },
+        { id: "pending-approvals", label: "طلبات الإضافة", icon: Clock, badge: pendingCount },
         { id: "inquiries", label: "الاستفسارات", icon: MessageSquare, badge: newInquiriesCount },
         { id: "settings", label: "الإعدادات", icon: Settings },
       ]

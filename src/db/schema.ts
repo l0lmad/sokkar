@@ -52,6 +52,8 @@ export const properties = pgTable("properties", {
   images: text("images"), // JSON array of image URLs
   videoUrl: text("video_url"),
   featured: boolean("featured").default(false),
+  isApproved: boolean("is_approved").default(true),
+  submittedBy: integer("submitted_by").references(() => users.id),
   ownerName: varchar("owner_name", { length: 255 }),
   ownerPhone: varchar("owner_phone", { length: 20 }),
   ownerWhatsapp: varchar("owner_whatsapp", { length: 20 }),

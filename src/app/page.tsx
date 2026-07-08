@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import AuthScreen from "@/components/AuthScreen";
 import Sidebar from "@/components/Sidebar";
@@ -8,6 +8,7 @@ import Dashboard from "@/components/Dashboard";
 import PropertiesList from "@/components/PropertiesList";
 import AddPropertyForm from "@/components/AddPropertyForm";
 import PropertyDetail from "@/components/PropertyDetail";
+import PendingApprovals from "@/components/PendingApprovals";
 import type { Property } from "@/db/schema";
 import {
   Settings,
@@ -24,6 +25,7 @@ import {
   EyeOff,
   Shield,
   UserPlus,
+  ExternalLink,
 } from "lucide-react";
 
 const MapView = dynamic(() => import("@/components/MapView"), {
@@ -472,15 +474,22 @@ function InquiriesPage() {
   >([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch("/api/inquiries")
-      .then((res) => res.json())
-      .then((data) => {
-        setInquiries(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+  const fetchInquiries = useCallback(async () => {
+    try {
+      const res = await fetch("/api/inquiries");
+      const data = await res.json();
+      setInquiries(data);
+      setLoading(false);
+    } catch {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchInquiries();
+    const interval = setInterval(fetchInquiries, 10000);
+    return () => clearInterval(interval);
+  }, [fetchInquiries]);
 
   if (loading) {
     return (
@@ -650,6 +659,8 @@ export default function HomePage() {
         return user.isAdmin ? (
           <AddPropertyForm onSuccess={() => setActiveTab("properties")} />
         ) : null;
+      case "pending-approvals":
+        return user.isAdmin ? <PendingApprovals /> : null;
       case "settings":
         return <SettingsPage user={user} onUserUpdate={handleUserUpdate} />;
       case "inquiries":

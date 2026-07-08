@@ -3,4 +3,5 @@ node_modules/
 .env
 .env.local
 *.cjs
-drizzle.config.json
+public/uploads/*
+!public/uploads/.gitkeep

@@ -17,6 +17,9 @@ import {
   ChevronLeft,
   Play,
   ExternalLink,
+  Copy,
+  Check,
+  Share2,
 } from "lucide-react";
 import type { Property } from "@/db/schema";
 import { useState } from "react";
@@ -83,6 +86,7 @@ export default function PropertyDetail({
   const [submitting, setSubmitting] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const images = property.images ? JSON.parse(property.images) : [];
 
@@ -187,12 +191,38 @@ export default function PropertyDetail({
             </span>
           )}
 
-          <button
-            onClick={onClose}
-            className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
-          >
-            <X size={20} />
-          </button>
+          <div className="absolute top-4 left-4 flex gap-2">
+            <button
+              onClick={onClose}
+              className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+            <button
+              onClick={async () => {
+                const url = `${window.location.origin}/property/${property.id}`;
+                try {
+                  await navigator.clipboard.writeText(url);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                } catch {}
+              }}
+              className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
+              title="نسخ رابط العقار"
+            >
+              {copied ? <Check size={18} className="text-green-600" /> : <Copy size={18} />}
+            </button>
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/property/${property.id}`;
+                if (navigator.share) navigator.share({ url });
+              }}
+              className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
+              title="مشاركة العقار"
+            >
+              <Share2 size={18} />
+            </button>
+          </div>
 
           {property.videoUrl && (
             <button
