@@ -2,7 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect, useCallback } from "react";
-import dynamic from "next/dynamic";
+import NextDynamic from "next/dynamic";
 import AuthScreen from "@/components/AuthScreen";
 import Sidebar from "@/components/Sidebar";
 import Dashboard from "@/components/Dashboard";
@@ -33,7 +33,7 @@ import {
   Mail,
 } from "lucide-react";
 
-const MapView = dynamic(() => import("@/components/MapView"), {
+const MapView = NextDynamic(() => import("@/components/MapView"), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-96">
